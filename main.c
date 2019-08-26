@@ -1,6 +1,8 @@
 /*
  ============================================================================
- Name        : LFSR_Generator_1.c
+ /*
+ ============================================================================
+ Name        : LSFR_Generator_2.c
  Author      : ng
  Version     :
  Copyright   : Do not use!
@@ -8,50 +10,67 @@
  ============================================================================
  */
 
-
-
-
-
-
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 
-
 uint16_t shiftRegister = 0;
-uint8_t newVal = 0;
+uint8_t newBit = 0;
+uint8_t DCdetect = 0;
+uint32_t generatedPattern = 0;
 
-
-void setGeneratorSeed(){
-	shiftRegister = 0b01110001000110; // set a start bit sequence
+void setGeneratorSeed(uint8_t val){
+	 // set a start bit sequence
+	if(val == 0){
+		shiftRegister = 0b1001011000000000;
+	}
+	if(val == 1){
+		shiftRegister = 0b1001100101010111;
+	}
+	if(val == 2){
+		shiftRegister = 0b0111010010100;
+	}
 }
 
-uint8_t linearFeedback(uint16_t first, uint16_t second){
-	uint16_t firstBit = 1<<first-1;
-	printf("|firstbit %d|\n", firstBit);
-	uint16_t secondBit = 1<<second-1;
-	printf("|firstbit %d|\n", secondBit);
-	uint8_t result = 0;
-	if((shiftRegister&&firstBit)>0){
-		printf("| fbit|");
+
+uint8_t shiftRegisterXOR(uint16_t first, uint16_t second){
+	uint16_t firstBit = shiftRegister & (1<<(first-1)) ;
+	uint16_t secondBit = shiftRegister & (1<<(second-1));
+	uint8_t output = 0;
+	if(firstBit>0){
 		firstBit = 1;
 	} else {
 		firstBit = 0;
 	}
-	if((shiftRegister&&secondBit)>0){
-		printf("| sbit|");
+	if(secondBit>0){
 		secondBit = 1;
 	} else {
 		secondBit = 0;
 	}
-	if((firstBit ^ secondBit)>0){
-		result = 1;
-	}else{
-		result = 0;
-	}
 
-	printf("| result 3 %d|\n", result);
-	return result;
+	output = firstBit ^ secondBit;
+	//if(shiftRegister == 65535){
+	//	output=1;
+	//}
+	return output;
+}
+void putNewBit(uint8_t val){
+	if(val>0){
+		val=1;
+	} else{
+		val=0;
+	}
+	shiftRegister = (shiftRegister<<1) | val;
+}
+
+void putNewBitPattern(uint8_t val){
+	if(val>0){
+		val=1;
+	} else{
+		val=0;
+	}
+	generatedPattern = (generatedPattern<<1) | val;
+
 }
 
 showBytes(uint16_t val){
@@ -65,26 +84,35 @@ showBytes(uint16_t val){
 	printf("\n");
 }
 
-void putNewBit(uint8_t val){
-	if(val>0){
-		val=1;
-	} else{
-		val=0;
+showBytesPattern(uint32_t val){
+	for(int i=0; i<32; i++){
+		if(val & 1<<(31-i)){
+			printf("1");
+		}else{
+			printf("0");
+		}
 	}
-	shiftRegister = (shiftRegister<<1) | val;
+	printf("\n");
 }
 
 int main(void) {
-	setGeneratorSeed();
-	for(int i=0; i<4; i++){
-	newVal = linearFeedback(5, 4);
-	putNewBit(newVal);
-	printf("|LETTER %d|\n", shiftRegister);
-	showBytes(shiftRegister);
-	}
 
-	puts("!!!END!!!"); /* prints !!!Hello World!!! */
+//for(int x=0; x<3; x++){
+	puts("NEW");
+	setGeneratorSeed(0);
+	for(int i=0; i<230; i++){
+		newBit = shiftRegisterXOR(7,11);
+		putNewBitPattern(newBit);
+		putNewBit(newBit);
+		printf("| Generated %d| , ", shiftRegister );
+		showBytes(shiftRegister);
+		showBytesPattern(generatedPattern);
+
+	}
+	printf("| Pattern %d| , ", generatedPattern );
+	showBytesPattern(generatedPattern);
+//}
+
+	puts("END"); /* prints !!!Hello World!!! */
 	return EXIT_SUCCESS;
 }
-
-
